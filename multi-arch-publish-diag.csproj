@@ -7,7 +7,7 @@
     <RootNamespace>multi_arch_publish_diag</RootNamespace>
     <Nullable>enable</Nullable>
     <!-- We can't set this unconditionally because the rid-less build will blow up -->
-    <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != ''">true</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != '' or '$(MSBuildIsRestoring)' == 'true'">true</PublishReadyToRun>
     <!-- Implicit usings get generated to RID-specific directories even though the content is the same
         this breaks reuse of the rid-less build -->
     <ImplicitUsings>disable</ImplicitUsings>
