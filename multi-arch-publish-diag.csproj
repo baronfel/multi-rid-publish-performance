@@ -6,18 +6,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>multi_arch_publish_diag</RootNamespace>
     <Nullable>enable</Nullable>
+
     <!-- We can't set this unconditionally because the rid-less build will blow up -->
     <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != '' or '$(MSBuildIsRestoring)' == 'true'">true</PublishReadyToRun>
-    <!-- Implicit usings get generated to RID-specific directories even though the content is the same
-        this breaks reuse of the rid-less build -->
-    <!-- <ImplicitUsings>disable</ImplicitUsings> -->
-    <!-- Automatic Assembly Info files get generated to RID-specific directories even though the content is the same
-        this breaks reuse of the rid-less build -->
-    <!-- <GenerateAssemblyInfo>false</GenerateAssemblyInfo> -->
-    <!-- editorconfigs for generator settings are also generated to RID-specific locations -->
-    <!-- <GeneratedMSBuildEditorConfigFile>$(BaseIntermediateOutputPath)GeneratorEditorConfig.editorconfig</GeneratedMSBuildEditorConfigFile> -->
-    <!-- There's a generated TFM attribute file as well generated to the RID-specific location, so skip it -->
-    <!-- <GenerateTargetFrameworkAttribute>true</GenerateTargetFrameworkAttribute> -->
   </PropertyGroup>
 
   <Target Name="PublishThreeTimes">
@@ -32,5 +23,20 @@
     <MSBuild Projects="@(_RidlessPublish)" Targets="Publish" Properties="_IsPublishing=true;IntermediateOutputPath=obj/$(Configuration)/;" BuildInParallel="true" />
     <MSBuild Projects="@(_RidPublish)" Targets="Publish" Properties="_IsPublishing=true;IntermediateOutputPath=obj/$(Configuration)/;" BuildInParallel="true" />
   </Target>
+
+  <Target Name="PublishThreeTimesInefficiently">
+    <ItemGroup>
+        <_RidItems Include="$(RuntimeIdentifiers)" />
+        <_RidPublish Include="$(MSBuildProjectFullPath)" AdditionalProperties="RuntimeIdentifier=%(_RidItems.Identity)" />
+        <_RidlessPublish Include="$(MSBuildProjectFullPath)" AdditionalProperties="RuntimeIdentifier=" UndefineProperties="RuntimeIdentifiers" />
+    </ItemGroup>
+
+    <!-- We have to force a shared IntermediateOutputPath or else the build will compute RID-specific IntermediateOutputPath and CSC will use that to generate IntermediateAssembly and IntermediateRefAssembly Items -->
+    <!-- I also haven't figured out how to 'combine' the logical lists of RIDless and RIDful builds into one parallel invocation -->
+    <MSBuild Projects="@(_RidlessPublish)" Targets="Publish" Properties="_IsPublishing=true;" BuildInParallel="true" />
+    <MSBuild Projects="@(_RidPublish)" Targets="Publish" Properties="_IsPublishing=true;" BuildInParallel="true" />
+  </Target>
+
+
 
 </Project>
